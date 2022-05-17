@@ -1,6 +1,8 @@
+import datetime
 import os
 import sys
 import csv
+
 import requests
 
 # ENV CONFIG FOR API KEY
@@ -73,11 +75,15 @@ def api_response_handler(answer, person):
 
 
 def save_request(request_url, request_answer):
-    with open("backup.csv", "a+") as f:
+    with open("records.txt", "a+") as f:
+        f.write(str(datetime.datetime.now()) + "\n")
         f.write(request_url + "\n" + str(request_answer) + "\n\n")
 
 
 def main():
+    if os.path.exists("output.csv"):
+        os.remove("output.csv")
+
     persons = read_from_csv(sys.argv[1])
     print("Successfully read {0} persons from {1}".format(INPUT_LINE_COUNT, sys.argv[1]))
 
