@@ -1,5 +1,5 @@
 # lusha-api
-This script send requests to Lusha API to get client information
+This script send requests to [Lusha Person API](https://www.lusha.com/docs/#person-api) to get client information
 
 ## Before
 Install required dependencies :
