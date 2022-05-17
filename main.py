@@ -1,55 +1,95 @@
 import os
+import sys
+import csv
 import requests
-import json
 
 # ENV CONFIG FOR API KEY
 from dotenv import load_dotenv
+
 load_dotenv()
 API_KEY = os.getenv("API_KEY")
+
+# GLOBAL VARIABLES
+INPUT_LINE_COUNT = 0
+API_ERROR_COUNT = 0
+
+
+class Person:
+    def __init__(self, company, first_name, last_name):
+        self.company = company
+        self.first_name = first_name
+        self.last_name = last_name
+        self.phone_number1 = ""
+        self.phone_number2 = ""
+
+    def print_person(self):
+        print("\033[1;32m" + self.first_name + " " + self.last_name + "\033[0m" + " works in " +
+              "\033[1;32m" + self.company + "\033[0m" + " phone number(s): " +
+              "\033[1;32m" + self.phone_number1 + "\033[0m" + " and " + "\033[1;32m" + self.phone_number2 + "\033[0m")
 
 
 def read_from_csv(file_name):
     # read from csv file, get the first name, last name, company
+    global INPUT_LINE_COUNT
+    persons = []
+
     with open(file_name, "r") as f:
-        lines = f.readlines()
-        persons = []
-        for line in lines:
-            person = line.split(",")
-            persons.append(person)
-    ...
+        reader = csv.reader(f)
+        for row in reader:
+            INPUT_LINE_COUNT += 1
+            persons.append(Person(row[0], row[1], row[2]))
+
+    return persons
 
 
-def write_to_csv(file_name, data):
-    ...
+def write_to_csv(persons):
+    for person in persons:
+        with open("output.csv", "a+") as f:
+            f.write(
+                person.company + "," + person.first_name + "," + person.last_name + "," + person.phone_number1 + "," + person.phone_number2 + "\n")
 
 
 # To make routine work easier, we can use the Lusha API (not verified yet due to lack of the API key)
 # API Document : https://www.lusha.com/docs/#person-api
-def call_api(first_name, last_name, company):
-    url = "https://api.lusha.com/person?firstName={0}&lastName={1}&company={2}&property=phoneNumbers".format(first_name, last_name, company)
+def call_api(person: Person):
+    url = "https://api.lusha.com/person?firstName={0}&lastName={1}&company={2}&property=phoneNumbers" \
+        .format(person.first_name, person.last_name, person.company)
     headers = {"api_key": API_KEY}
     r = requests.get(url, headers=headers)
     answer = r.json()
-    return answer
+    return url, answer
 
 
-def test():
-    # read from csv file, get the first name, last name, company, domain
-    persons = read_from_csv(file_name)
+def api_response_handler(answer, person):
+    global API_ERROR_COUNT
+    if "errors" in answer:
+        API_ERROR_COUNT += 1
+        print("\033[1;31mError: \033[0m" + answer["errors"]["message"])
+    else:
+        person.phone_number1 = answer["data"]["phoneNumbers"][0]["internationalNumber"]
+        if len(answer["data"]["phoneNumbers"]) > 1:
+            person.phone_number2 = answer["data"]["phoneNumbers"][1]["internationalNumber"]
+        person.print_person()
 
-    for person in persons:
-        call_api(...)
-        # add the phone number to csv file
-        write_to_csv(file_name, person, phone_number)
 
-    return
+def save_request(request_url, request_answer):
+    with open("backup.csv", "a+") as f:
+        f.write(request_url + "\n" + str(request_answer) + "\n\n")
 
 
 def main():
-    print("Hello world")
-    print(API_KEY)
-    answer = call_api("Fanny", "Dufourt", "PAYOT")
-    print(answer)
+    persons = read_from_csv(sys.argv[1])
+    print("Successfully read {0} persons from {1}".format(INPUT_LINE_COUNT, sys.argv[1]))
+
+    for person in persons:
+        url, answer = call_api(person)
+        save_request(url, answer)
+        api_response_handler(answer, person)
+
+    write_to_csv(persons)
+
+    print("\033[1;32mFinished. Results can be found in output.csv\033[0m")
+    print("\033[1;33mCouldn't find {0} of {1} persons in the list.\033[0m".format(API_ERROR_COUNT, INPUT_LINE_COUNT))
 
 
 if __name__ == '__main__':
