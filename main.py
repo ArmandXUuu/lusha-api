@@ -66,7 +66,7 @@ def api_response_handler(answer, person):
     global API_ERROR_COUNT
     if "errors" in answer:
         API_ERROR_COUNT += 1
-        print("\033[1;31mError: \033[0m" + answer["errors"]["message"])
+        print("\033[1;31mError: \033[0m" + str(answer))
     else:
         person.phone_number1 = answer["data"]["phoneNumbers"][0]["internationalNumber"]
         if len(answer["data"]["phoneNumbers"]) > 1:
