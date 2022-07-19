@@ -99,6 +99,9 @@ def api_response_handler(answer, persons):
     print("Got {0} answers from server.".format(len(answer_contact)))
 
     for a in answer_contact.keys():
+        contact = answer_contact[a]
+        person = PersonResStruct(a, persons[int(a)].companies[0]["name"], persons[int(a)].firstName, persons[int(a)].lastName,
+                                 "", "")
         if "firstName" not in answer_contact[a]:
             print("\033[1;31mError: \033[0m {0} - {1} : {2}"
                   .format(str(persons[int(a)].contactId),
@@ -106,12 +109,12 @@ def api_response_handler(answer, persons):
                           str(answer_contact[a])))
             API_ERROR_COUNT += 1
         else:
-            contact = answer_contact[a]
             phone_2 = contact["phones"][1] if len(contact["phones"]) == 2 else ""
-            person = PersonResStruct(a, persons[int(a)].companies[0]["name"], contact["firstName"], contact["lastName"],
-                                     contact["phones"][0], phone_2)
+            person.phone_number1 = contact["phones"][0]
+            person.phone_number2 = phone_2
             person.print_person()
-            persons_response.append(person)
+
+        persons_response.append(person)
 
     return persons_response
 
