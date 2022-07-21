@@ -108,6 +108,11 @@ def api_response_handler(answer, persons):
                           str(persons[int(a)].firstName) + ' ' + str(persons[int(a)].lastName),
                           str(answer_contact[a])))
             API_ERROR_COUNT += 1
+        elif len(contact["phones"]) == 0:
+            print("\033[1;31mError: \033[0m {0} - {1} : The STUPID API returned a person WITH NO PHONE"
+                  .format(str(persons[int(a)].contactId),
+                          str(persons[int(a)].firstName) + ' ' + str(persons[int(a)].lastName)))
+            API_ERROR_COUNT += 1
         else:
             phone_2 = contact["phones"][1] if len(contact["phones"]) == 2 else ""
             person.phone_number1 = contact["phones"][0]
